@@ -3,3 +3,5 @@
 #z1_graph_model.py
 
 #Just testing out codespaces
+
+print("Hello, Hyrule")
