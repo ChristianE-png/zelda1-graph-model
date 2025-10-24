@@ -1,86 +1,57 @@
-#Christian Ellington
-#J00735086
-#z1_graph_model.py
-
-
+from data_extractor import DataExtractor
 import networkx as nx
+import matplotlib.pyplot as plt
 
+rom = open("zelda.nes", "rb")
 
+de = DataExtractor(rom = rom)
+de.Parse()
 
-print("Hello, Hyrule.")
+for i in range(1,10):
+    g = nx.Graph()
+    edge_colors = [] #for assigning a color to each edge (which must be done in the order of each edge's creation)
+    node_colors = []
 
-#Create an empty graph of hyrule's requirements/connections
-z1g = nx.Graph() #For undirected graph
-#z1g = nx.DiGraph() #For a directed graph
+    for room in de.data[i]: #Add each room to a node. Rooms with keys are yellow, otherwise lightblue
+        g.add_node((de.data[i][room]["col"], de.data[i][room]["row"]))
+        print(de.data[i][room]["item_info"] )
+        if de.data[i][room]["item_info"] in ["Key", "D Key"]:
+            node_colors.append('yellow')
+        elif de.data[i][room]["room_type"] in ["T Room"]: 
+            node_colors.append('red')
+        else:
+            node_colors.append('lightblue')
 
-#Ruleset
-    #Nodes are all dungeon rooms + the overworld
-    #Edges are dungeon rooms/overworld areas that connect to one another
-    #Nodes contain item and key attributes. Items consist of key items or keys that are picked up throughout the game.
-    #Edges contain required and keyNeeded attributes. 
-        #required items are key items the player must have to enter the room.
-        #keyNeeded implies that the player must use a key to enter the room.
-    #My current concern is with the player not picking up the sword.
-        #Use bombs/other items to get by these req's, but how do you know you can get them in the first place?
-        #Makes rooms with required fights (boss and combat rooms) a bit harder to navigate
+    for room in de.data[i]: #Add all verticle edges for rooms that are connected
+        print(de.data[i][room]["north.wall_type"] )
+        if de.data[i][room]["north.wall_type"] in ["Shutter Door", "Door", "Bomb Hole", "Locked Door"]:
+            g.add_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]+1))
 
-#Overworld Node (Connected to all dungeon entrances + Overworld Requirements)
-z1g.add_node("Overworld") 
+            if de.data[i][room]["north.wall_type"] in ["Shutter Door"]: #Color each edge based on connection type
+                edge_colors.append('purple')
+            elif de.data[i][room]["north.wall_type"] in ["Locked Door"]:
+                edge_colors.append('red')
+            elif de.data[i][room]["north.wall_type"] in ["Bomb Hole"]:
+                edge_colors.append('yellow')
+            else:
+                edge_colors.append('green')
+        
+        print(de.data[i][room]["west.wall_type"]) #Add all horizontal edges for rooms that are connected
+        if de.data[i][room]["west.wall_type"] in ["Shutter Door", "Door", "Bomb Hole", "Locked Door"]:
+            g.add_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]-1, de.data[i][room]["row"]))
 
-#Level 1 Nodes
-z1g.add_node("L1_R1", items = [], keys = 1)
-z1g.add_node("L1_R2", items = [], keys = 1)
-z1g.add_node("L1_R3", items = [], keys = 0)
-z1g.add_node("L1_R4", items = [], keys = 0)
-z1g.add_node("L1_R5", items = [], keys = 1)
-z1g.add_node("L1_R6", items = [], keys = 0)
-z1g.add_node("L1_R7", items = [], keys = 0)
-z1g.add_node("L1_R8", items = [], keys = 0)
-z1g.add_node("L1_R9", items = [], keys = 0)
-z1g.add_node("L1_R10", items = ["Wooden_Boomerang"], keys = 0)
-z1g.add_node("L1_R11", items = [], keys = 1)
-z1g.add_node("L1_R12", items = [], keys = 1)
-z1g.add_node("L1_R13", items = [], keys = 0)
-z1g.add_node("L1_R14", items = ["Triforce_Piece"], keys = 0)
-z1g.add_node("L1_R15", items = [], keys = 0)
-z1g.add_node("L1_R16", items = [], keys = 1)
-z1g.add_node("L1_B1", items = ["Bow"], keys = 0) #This is the basement/staircase room
-#Probably won't end up needing these, they can just be absorbed into L1_R15 since it houses the room
+            if de.data[i][room]["west.wall_type"] in ["Shutter Door"]: #Color each edge based on connection type
+                edge_colors.append('purple')
+            elif de.data[i][room]["west.wall_type"] in ["Locked Door"]:
+                edge_colors.append('red')
+            elif de.data[i][room]["west.wall_type"] in ["Bomb Hole"]:
+                edge_colors.append('yellow')
+            else:
+                edge_colors.append('green')
 
-z1g.add_edge("Overworld", "L1_Ent", required = [], keyNeeded = False)
-
-z1g.add_edge("L1_Ent", "L1_R1", required = [], keyNeeded = False)
-z1g.add_edge("L1_Ent", "L1_R2", required = [], keyNeeded = False)
-z1g.add_edge("L1_Ent", "L1_R3", required = [], keyNeeded = True)
-
-z1g.add_edge("L1_R3", "L1_R5", required = [], keyNeeded = False)
-
-z1g.add_edge("L1_R4", "L1_R5", required = [], keyNeeded = False)
-z1g.add_edge("L1_R4", "L1_R8", required = [], keyNeeded = True)
-z1g.add_edge("L1_R5", "L1_R6", required = [], keyNeeded = False)
-z1g.add_edge("L1_R5", "L1_R9", required = [], keyNeeded = False)
-z1g.add_edge("L1_R6", "L1_R10", required = [], keyNeeded = False)
-
-z1g.add_edge("L1_R7", "L1_R8", required = [], keyNeeded = False)
-z1g.add_edge("L1_R8", "L1_R9", required = [], keyNeeded = False)
-z1g.add_edge("L1_R9", "L1_R10", required = [], keyNeeded = True)
-z1g.add_edge("L1_R9", "L1_R12", required = [], keyNeeded = False)
-z1g.add_edge("L1_R10", "L1_R11", required = [], keyNeeded = False)
-z1g.add_edge("L1_R11", "L1_R13", required = [], keyNeeded = True)
-
-z1g.add_edge("L1_R12", "L1_R16", required = [], keyNeeded = True)
-z1g.add_edge("L1_13", "L1_R14", required = [], keyNeeded = False)
-
-z1g.add_edge("L1_R15", "L1_R16", required = [], keyNeeded = True)
-z1g.add_edge("L1_R15", "L1_B1", required = [], keyNeeded = False) #Same deal as above
-
-
-#Overworld Requirements(nodes and edges) (these will be reorganized later)
-z1g.add_node("L4_Ent", items = [], keys = 0)
-z1g.add_node("L7_Ent", items = [], keys = 0) #these are temp
-
-z1g.add_edge("Overworld", "L4_Ent", required = ["Raft"], keyNeeded = False)
-z1g.add_edge("Overworld", "L7_Ent", required = ["Whistle"], keyNeeded = False)
+    nx.draw(g, pos={n: n for n in g.nodes()}, with_labels=True, node_color=node_colors, node_size=800, edge_color = edge_colors)
+    plt.savefig(f"dungeon_level{i}.png") #save the graph in a file
+    plt.cla()  # clears the plot for next iteration
 
 
 
@@ -91,5 +62,99 @@ z1g.add_edge("Overworld", "L7_Ent", required = ["Whistle"], keyNeeded = False)
 
 
 
-print("Nodes:", z1g.nodes())
-print("Edges:", z1g.edges())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
+def build_dungeon_graph(level_data):
+    G = Graph()
+    grid_size = 4  # 4x4 grid
+    room_count = 18
+    room_size = 15
+
+    # Doorway types are encoded in byte 0 of each room block
+    # Bits: 0x01 = up, 0x02 = down, 0x04 = left, 0x08 = right
+    # These bits are set for ANY doorway (bombable, locked, etc.)
+
+    directions = {
+        'up': (0, -1),
+        'down': (0, 1),
+        'left': (-1, 0),
+        'right': (1, 0)
+    }
+    bit_flags = {
+        'up': 0x01,
+        'down': 0x02,
+        'left': 0x04,
+        'right': 0x08
+    }
+
+    for room_index in range(room_count):
+        x = room_index % grid_size
+        y = room_index // grid_size
+        room_id = (x, y)
+        G.add_node(room_id)
+
+        room_offset = room_index * room_size
+        doorway_byte = level_data[room_offset]  # Byte 0 = doorway flags
+
+        for direction, (dx, dy) in directions.items():
+            if doorway_byte & bit_flags[direction]:
+                neighbor_x = x + dx
+                neighbor_y = y + dy
+                if 0 <= neighbor_x < grid_size and 0 <= neighbor_y < grid_size:
+                    neighbor_id = (neighbor_x, neighbor_y)
+                    G.add_edge(room_id, neighbor_id)
+
+    return G
+
+
+
+if __name__ == "__main__":
+    import io
+
+    with open("zelda.nes", "rb") as f:
+        rom_data = io.BytesIO(f.read())
+
+    reader = RomReader(rom_data)
+
+    level_data = reader.GetLevelInfo(level_num=1)
+    print("Level data length:", len(level_data))
+    print("Level data sample:", level_data[:17])
+
+
+    print("Building dungeon graph...")
+    G = build_dungeon_graph(level_data)
+    print("Graph built with", len(G.nodes), "nodes and", len(G.edges), "edges")
+
+
+    # Draw using a grid layout
+    pos = {(x, y): (x, -y) for (x, y) in G.nodes()}
+    nx.draw(G, pos=pos, with_labels=True, node_color='lightblue', node_size=800)
+    plt.title("Dungeon Level 1")
+    plt.savefig("dungeon_level1.png")
+    print("Dungeon graph saved as dungeon_level1.png")
+'''
+
+
+
