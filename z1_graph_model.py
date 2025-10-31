@@ -7,61 +7,165 @@ rom = open("zelda.nes", "rb")
 de = DataExtractor(rom = rom)
 de.Parse()
 
+
 for i in range(1,10):
     g = nx.Graph()
     edge_colors = [] #for assigning a color to each edge (which must be done in the order of each edge's creation)
     node_colors = []
+    node_sizes = []
+
 
     for room in de.data[i]: #Add each room to a node. Rooms with keys are yellow, otherwise lightblue
-        g.add_node((de.data[i][room]["col"], de.data[i][room]["row"]))
-        print(de.data[i][room]["item_info"] )
+        g.add_node((de.data[i][room]["col"], de.data[i][room]["row"]), color = 'lightblue', size = 800, stairway = de.data[i][room]["stair_info"], keys = 0)
+        
+        if i == 1 and de.data[i][room]["item_info"] != 'null':
+            print(de.data[i][room]["item_info"] )
+
         if de.data[i][room]["item_info"] in ["Key", "D Key"]:
-            node_colors.append('yellow')
-        elif de.data[i][room]["room_type"] in ["T Room"]: 
-            node_colors.append('red')
-        else:
-            node_colors.append('lightblue')
+            g.nodes[(de.data[i][room]["col"], de.data[i][room]["row"])]["keys"] = 1
+            #working on implementing keys and items later
+        
+        if de.data[i][room]["room_type"] in ["T Room"]: 
+            g.nodes[(de.data[i][room]["col"], de.data[i][room]["row"])]["color"] = "red"
+            g.nodes[(de.data[i][room]["col"], de.data[i][room]["row"])]["size"] = 100
+
+            g.add_node((de.data[i][room]["col"]+0.3, de.data[i][room]["row"]+0.3), color = 'red', size = 100, stairway = de.data[i][room]["stair_info"], keys = 0)
+
+
+        elif de.data[i][room]["room_type"] in ["Horiz. Chute"]:
+            g.nodes[(de.data[i][room]["col"], de.data[i][room]["row"])]["color"] = 'purple'
+            g.nodes[(de.data[i][room]["col"], de.data[i][room]["row"])]["size"] = 100
+
+            g.add_node((de.data[i][room]["col"]+0.35, de.data[i][room]["row"]+0.40), color = 'purple', size = 100, stairway = de.data[i][room]["stair_info"], keys = 0)
+            g.add_node((de.data[i][room]["col"]-0.35, de.data[i][room]["row"]-0.40), color = 'purple', size = 100, stairway = de.data[i][room]["stair_info"], keys = 0)
+
+
+        elif de.data[i][room]["room_type"] in ["Vert. Chute"]:
+            g.nodes[(de.data[i][room]["col"], de.data[i][room]["row"])]["color"] = 'pink'
+            g.nodes[(de.data[i][room]["col"], de.data[i][room]["row"])]["size"] = 100
+
+            g.add_node((de.data[i][room]["col"]+0.40, de.data[i][room]["row"]+0.35), color = 'pink', size = 100, stairway = de.data[i][room]["stair_info"], keys = 0)
+            g.add_node((de.data[i][room]["col"]-0.40, de.data[i][room]["row"]-0.35), color = 'pink', size = 100, stairway = de.data[i][room]["stair_info"], keys = 0)
+
+
+        elif de.data[i][room]["room_type"] in ["Entrance Room"]:
+            g.nodes[(de.data[i][room]["col"], de.data[i][room]["row"])]["color"] = 'lime'
+
+
 
     for room in de.data[i]: #Add all verticle edges for rooms that are connected
-        print(de.data[i][room]["north.wall_type"] )
-        if de.data[i][room]["north.wall_type"] in ["Shutter Door", "Door", "Bomb Hole", "Locked Door"]:
-            g.add_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]+1))
+        if i == 1:
+            print("Room Stuff (North): ", (de.data[i][room]["col"], de.data[i][room]["row"]), de.data[i][room]["north.wall_type"] )
 
-            if de.data[i][room]["north.wall_type"] in ["Shutter Door"]: #Color each edge based on connection type
-                edge_colors.append('purple')
-            elif de.data[i][room]["north.wall_type"] in ["Locked Door"]:
-                edge_colors.append('red')
-            elif de.data[i][room]["north.wall_type"] in ["Bomb Hole"]:
-                edge_colors.append('yellow')
-            else:
-                edge_colors.append('green')
-        
-        print(de.data[i][room]["west.wall_type"]) #Add all horizontal edges for rooms that are connected
-        if de.data[i][room]["west.wall_type"] in ["Shutter Door", "Door", "Bomb Hole", "Locked Door"]:
-            g.add_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]-1, de.data[i][room]["row"]))
+        #Check north facing walls
+        if de.data[i][room]["north.wall_type"] == "Shutter Door":
+            g.add_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]+1), color = 'green')
 
-            if de.data[i][room]["west.wall_type"] in ["Shutter Door"]: #Color each edge based on connection type
-                edge_colors.append('purple')
-            elif de.data[i][room]["west.wall_type"] in ["Locked Door"]:
-                edge_colors.append('red')
-            elif de.data[i][room]["west.wall_type"] in ["Bomb Hole"]:
-                edge_colors.append('yellow')
-            else:
-                edge_colors.append('green')
+        elif de.data[i][room]["north.wall_type"] == "Locked Door":
+            g.add_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]+1), color = 'red')
 
-    nx.draw(g, pos={n: n for n in g.nodes()}, with_labels=True, node_color=node_colors, node_size=800, edge_color = edge_colors)
+        elif de.data[i][room]["north.wall_type"] == "Door":
+            g.add_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]+1), color = 'green')
+
+        elif de.data[i][room]["north.wall_type"] == "Bomb Hole":
+            g.add_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]+1), color = 'green')
+
+
+
+        if i == 1:
+            print("Room Stuff (East): ", (de.data[i][room]["col"], de.data[i][room]["row"]), de.data[i][room]["east.wall_type"])
+
+        #Check east facing walls
+        if de.data[i][room]["east.wall_type"] == "Shutter Door":
+            g.add_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]+1, de.data[i][room]["row"]), color = 'green')
+
+        elif de.data[i][room]["east.wall_type"] == "Locked Door":
+            g.add_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]+1, de.data[i][room]["row"]), color = 'red')
+
+        elif de.data[i][room]["east.wall_type"] == "Door":
+            g.add_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]+1, de.data[i][room]["row"]), color = 'green')
+
+        elif de.data[i][room]["east.wall_type"] == "Bomb Hole":
+            g.add_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]+1, de.data[i][room]["row"]), color = 'green')
+
+
+
+
+
+    def check_splits(g, i, room):
+        if de.data[i][room]["room_type"] in ["T Room"]: #T Room has 3 possible entrances for 1 new node. Add an edge for each, remove the originals.
+            if g.has_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]+1, de.data[i][room]["row"])):
+                g.add_edge((de.data[i][room]["col"]+0.30, de.data[i][room]["row"]+0.30), (de.data[i][room]["col"]+1, de.data[i][room]["row"]), color = 
+                           g.edges[(de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]+1, de.data[i][room]["row"])]["color"])
+                g.remove_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]+1, de.data[i][room]["row"]))
+
+            if g.has_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]+1)):
+                g.add_edge((de.data[i][room]["col"]+0.30, de.data[i][room]["row"]+0.30), (de.data[i][room]["col"], de.data[i][room]["row"]+1), color = 
+                           g.edges[(de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]+1)]["color"])
+                g.remove_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]+1))
+
+            if g.has_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]-1, de.data[i][room]["row"])):
+                g.add_edge((de.data[i][room]["col"]+0.30, de.data[i][room]["row"]+0.30), (de.data[i][room]["col"]-1, de.data[i][room]["row"]), color = 
+                           g.edges[(de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]-1, de.data[i][room]["row"])]["color"])
+                g.remove_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]-1, de.data[i][room]["row"]))
+
+        elif de.data[i][room]["room_type"] in ["Vert. Chute"]: #Vertical Chute has 2 possible new entrances for 2 new nodes. Add an edge for each, remove the originals.
+            if g.has_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]+1, de.data[i][room]["row"])):
+                g.add_edge((de.data[i][room]["col"]+0.40, de.data[i][room]["row"]+0.35), (de.data[i][room]["col"]+1, de.data[i][room]["row"]), color = 
+                           g.edges[(de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]+1, de.data[i][room]["row"])]["color"])
+                g.remove_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]+1, de.data[i][room]["row"]))
+
+            if g.has_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]-1, de.data[i][room]["row"])):
+                g.add_edge((de.data[i][room]["col"]-0.40, de.data[i][room]["row"]-0.35), (de.data[i][room]["col"]-1, de.data[i][room]["row"]), color = 
+                           g.edges[(de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]-1, de.data[i][room]["row"])]["color"])
+                g.remove_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"]-1, de.data[i][room]["row"]))
+
+        elif de.data[i][room]["room_type"] in ["Horiz. Chute"]: #Horizontal Chute has 2 possible new entrances for 2 new nodes. Add an edge for each, remove the originals.
+            if g.has_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]+1)):
+                g.add_edge((de.data[i][room]["col"]+0.35, de.data[i][room]["row"]+0.40), (de.data[i][room]["col"], de.data[i][room]["row"]+1), color = 
+                           g.edges[(de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]+1)]["color"])
+                g.remove_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]+1))
+
+            if g.has_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]-1)):
+                g.add_edge((de.data[i][room]["col"]-0.35, de.data[i][room]["row"]-0.40), (de.data[i][room]["col"], de.data[i][room]["row"]-1), color = 
+                           g.edges[(de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]-1)]["color"])
+                g.remove_edge((de.data[i][room]["col"], de.data[i][room]["row"]), (de.data[i][room]["col"], de.data[i][room]["row"]-1))
+
+        return g
+
+    #Perform the node splits (for T Room, Horiz. Chute, Vert. Chute)
+    for room in de.data[i]:
+        g = check_splits(g, i, room)
+
+    #Add additional edges for stairway connected rooms
+    for u, u_stair in g.nodes(data = 'stairway', default = ''):
+
+        if(u_stair[0:3] == "Sta"):
+
+            for v, v_stair in g.nodes(data = 'stairway', default = ''):
+                if(v_stair[0:3] == "Sta"):
+                   
+                    #if((u != v) and (u_stair != '') and (v_stair != '')): print(u_stair, v_stair)
+                    if((u != v) and (u_stair == v_stair)):
+                        #print(u_stair, v_stair)
+                        g.add_edge(u,v, color = 'magenta')
+                        break #Found the stairway matches, move on to the next set
+
+    #Color the edges (uses attributes' information to append colors to edge_colors)
+    for u, v, color in g.edges(data = 'color', default = 'black'):
+        edge_colors.append(color)
+    
+    #Color the nodes (uses attributes' information to append colors to node_colors)
+    for u, color in g.nodes(data = 'color', default = 'lightblue'):
+        node_colors.append(color)
+
+    #Assign the nodes their sizes
+    for u, size in g.nodes(data = 'size', default = '800'):
+        node_sizes.append(size)
+
+    nx.draw(g, pos={n: n for n in g.nodes()}, with_labels=True, node_color=node_colors, node_size=node_sizes, edge_color = edge_colors, font_size = 10)
     plt.savefig(f"dungeon_level{i}.png") #save the graph in a file
     plt.cla()  # clears the plot for next iteration
-
-
-
-
-
-
-
-
-
-
 
 
 
