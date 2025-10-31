@@ -7,6 +7,8 @@ rom = open("zelda.nes", "rb")
 de = DataExtractor(rom = rom)
 de.Parse()
 
+DOORS = ["Shutter Door", "Door", "Locked Door", "Bomb Hole"]
+
 def position(node):
     tupl, data = node
     if data["room_type"] == "T Room":
@@ -147,7 +149,6 @@ for i in range(1,10):
             print("Room Stuff (East): ", (de.data[i][room]["col"], de.data[i][room]["row"]), de.data[i][room]["east.wall_type"])
 
         #Check east facing walls
-        DOORS = ["Shutter Door", "Door", "Locked Door", "Bomb Hole"]
         if de.data[i][room]["east.wall_type"] in DOORS:
             door_color = 'green'
             room_coords = (de.data[i][room]["col"], de.data[i][room]["row"],0)
