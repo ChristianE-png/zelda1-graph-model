@@ -242,7 +242,7 @@ for i in range(1,10):
     for u, size in g.nodes(data = 'size', default = '800'):
         node_sizes.append(size)
 
-    nx.draw(g, pos={n[0]: position(n) for n in g.nodes(True)}, with_labels=True, node_color=node_colors, node_size=node_sizes, edge_color = edge_colors, font_size = 10)
+    nx.draw(g, pos={n[0]: position(n) for n in g.nodes(True)}, with_labels=False, node_color=node_colors, node_size=node_sizes, edge_color = edge_colors, font_size = 10)
     plt.savefig(f"dungeon_level{i}.png") #save the graph in a file
     plt.cla()  # clears the plot for next iteration
 
